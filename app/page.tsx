@@ -36,7 +36,7 @@ export default function Home() {
       }
     } else {
       // Desktop → redirect to Farcaster web
-      window.location.href = 'https://farcaster.xyz/miniapps/019e0552-19b3-b52f-b2fb-0bf479cf4ec2/base-blocks'
+      window.location.href = 'https://farcaster.xyz/miniapps/PEFsU0An42c4/base-blocks'
     }
   }, [])
 
