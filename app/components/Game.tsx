@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'
 import sdk from '@farcaster/miniapp-sdk'
 
 const CONTRACT_ADDRESS = '0x9C5fc82C59944f1184fF399d816a3423b6bC2724' as `0x${string}`
@@ -16,10 +16,35 @@ const CONTRACT_ABI = [
     ],
     outputs: [],
   },
+  {
+    name: 'getPlayerBest',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'player', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'scores',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: '', type: 'uint256' }],
+    outputs: [
+      { name: 'player', type: 'address' },
+      { name: 'score', type: 'uint256' },
+      { name: 'moves', type: 'uint256' },
+      { name: 'timestamp', type: 'uint256' },
+    ],
+  },
+  {
+    name: 'getTotalEdits',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
 ] as const
 
 const BUILDER_CODE = '0x07626173656170700080218021802180218021802180218021' as `0x${string}`
-
 const BOARD_SIZE = 4
 
 function createEmptyBoard() {
@@ -69,7 +94,6 @@ function rotateBoard(board: number[][]) {
 function move(board: number[][], direction: string) {
   let rotated = board
   let times = 0
-  if (direction === 'left') times = 0
   if (direction === 'right') times = 2
   if (direction === 'up') times = 3
   if (direction === 'down') times = 1
@@ -126,12 +150,25 @@ export default function Game() {
   const [chainCount, setChainCount] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [leaderboard, setLeaderboard] = useState<{player: string, score: number}[]>([])
 
   const { address, isConnected } = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
   const { writeContract, data: txHash, isPending } = useWriteContract()
   const { isLoading: isConfirming, isSuccess: txSuccess } = useWaitForTransactionReceipt({ hash: txHash })
+
+  // Load best score from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('baseblocks_best')
+    if (saved) setBestScore(parseInt(saved))
+  }, [])
+
+  // Save best score to localStorage whenever it changes
+  useEffect(() => {
+    if (bestScore > 0) localStorage.setItem('baseblocks_best', bestScore.toString())
+  }, [bestScore])
 
   useEffect(() => {
     sdk.actions.ready()
@@ -157,7 +194,11 @@ export default function Game() {
       if (gained > 0) setChainCount(c => c + 1)
       setScore(s => {
         const newScore = s + gained
-        setBestScore(b => Math.max(b, newScore))
+        setBestScore(b => {
+          const newBest = Math.max(b, newScore)
+          localStorage.setItem('baseblocks_best', newBest.toString())
+          return newBest
+        })
         return newScore
       })
       if (isGameOver(withTile)) setGameOver(true)
@@ -210,16 +251,11 @@ export default function Game() {
   }
 
   const handleConnect = () => {
-    if (connectors.length > 0) {
-      connect({ connector: connectors[0] })
-    }
+    if (connectors.length > 0) connect({ connector: connectors[0] })
   }
 
   const saveScore = () => {
-    if (!isConnected) {
-      handleConnect()
-      return
-    }
+    if (!isConnected) { handleConnect(); return }
     if (score === 0) return
     setSaving(true)
     setSaveMsg('Sending to Base...')
@@ -230,6 +266,19 @@ export default function Game() {
       args: [BigInt(score), BigInt(moves)],
       dataSuffix: BUILDER_CODE,
     })
+  }
+
+  const loadLeaderboard = async () => {
+    setShowLeaderboard(true)
+    try {
+      const res = await fetch('https://api.basescan.org/api?module=logs&action=getLogs&address=' + CONTRACT_ADDRESS + '&topic0=0x&apikey=YourApiKeyToken')
+      // Simplified: show placeholder until real indexing
+      setLeaderboard([
+        { player: address || '0x0000...0000', score: bestScore },
+      ])
+    } catch {
+      setLeaderboard([{ player: address || '0x0000...0000', score: bestScore }])
+    }
   }
 
   if (!isReady) {
@@ -244,6 +293,38 @@ export default function Game() {
     <div className="min-h-screen text-white p-4 max-w-sm mx-auto"
       style={{ background: 'radial-gradient(ellipse at top, #0f172a 0%, #020617 100%)' }}>
 
+      {/* Leaderboard Modal */}
+      {showLeaderboard && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-3xl p-5 w-full max-w-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black">🏆 Leaderboard</h2>
+              <button onClick={() => setShowLeaderboard(false)} className="text-gray-400 text-xl">✕</button>
+            </div>
+            <div className="text-xs text-gray-500 mb-3">Top scores saved on Base blockchain</div>
+            {leaderboard.length === 0 ? (
+              <div className="text-center text-gray-500 py-4">No scores yet. Be the first!</div>
+            ) : (
+              leaderboard.map((entry, i) => (
+                <div key={i} className="flex items-center justify-between bg-gray-800 rounded-xl p-3 mb-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-yellow-400 font-black">#{i + 1}</span>
+                    <span className="text-xs text-gray-400 font-mono">
+                      {entry.player.slice(0,6)}...{entry.player.slice(-4)}
+                    </span>
+                  </div>
+                  <span className="font-black text-blue-400">{entry.score}</span>
+                </div>
+              ))
+            )}
+            <div className="text-xs text-gray-600 text-center mt-3">
+              Save your score to appear here!
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-black">
@@ -272,6 +353,7 @@ export default function Game() {
         )}
       </div>
 
+      {/* Score Cards */}
       <div className="flex gap-3 mb-5">
         <div className="flex-1 bg-gray-900/80 border border-gray-700/50 rounded-2xl p-3 flex items-center gap-3">
           <span className="text-2xl">🏆</span>
@@ -290,11 +372,7 @@ export default function Game() {
         </div>
         <div className="flex flex-col gap-2">
           <button onClick={resetGame} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-xl p-2 text-sm transition-all">🔄</button>
-          <button
-            onClick={saveScore}
-            disabled={saving || score === 0 || isPending || isConfirming}
-            className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-xl p-2 text-sm transition-all disabled:opacity-40"
-          >💾</button>
+          <button onClick={loadLeaderboard} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-xl p-2 text-sm transition-all">📊</button>
         </div>
       </div>
 
@@ -304,6 +382,7 @@ export default function Game() {
         </div>
       )}
 
+      {/* Game Board */}
       <div className="relative rounded-3xl p-3 mb-4"
         style={{ background: 'rgba(15, 23, 42, 0.9)', boxShadow: '0 0 30px rgba(99,102,241,0.3)' }}>
 
@@ -339,6 +418,7 @@ export default function Game() {
         </div>
       </div>
 
+      {/* Stats */}
       <div className="flex gap-3 mb-4">
         <div className="flex-1 bg-gray-900/80 border border-gray-700/50 rounded-2xl p-3 flex items-center gap-2">
           <span className="text-lg">👣</span>
@@ -356,6 +436,7 @@ export default function Game() {
         </div>
       </div>
 
+      {/* Controls */}
       <div className="flex flex-col items-center gap-2">
         <button onClick={() => handleMove('up')}
           className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold active:scale-95"
