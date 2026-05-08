@@ -1,0 +1,29 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Base Blocks",
+    "subtitle": "Onchain 2048 on Base",
+    "description": "Play 2048 and save your score on Base blockchain. Weekly leaderboard with onchain scores.",
+    "homeUrl": "https://base-blocks-jet.vercel.app",
+    "iconUrl": "https://base-blocks-jet.vercel.app/icon.png",
+    "splashImageUrl": "https://base-blocks-jet.vercel.app/splash.png",
+    "splashBackgroundColor": "#111827",
+    "screenshotUrls": [
+      "https://base-blocks-jet.vercel.app/screenshot.png"
+    ],
+    "primaryCategory": "games",
+    "tags": ["game", "2048", "base", "onchain"],
+    "tagline": "Play 2048 on Base",
+    "heroImageUrl": "https://base-blocks-jet.vercel.app/og-image.png",
+    "ogTitle": "Base Blocks",
+    "ogDescription": "Onchain 2048 on Base — a Farcaster Mini App",
+    "ogImageUrl": "https://base-blocks-jet.vercel.app/og-image.png",
+    "noindex": false,
+    "requiredChains": ["eip155:8453"]
+  }
+}

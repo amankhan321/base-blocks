@@ -8,14 +8,14 @@ export const metadata: Metadata = {
   other: {
     'fc:miniapp': JSON.stringify({
       version: '1',
-      imageUrl: 'https://base-blocks.vercel.app/og-image.png',
+      imageUrl: 'base-blocks-jet.vercel.app/og-image.png',
       button: {
         title: 'Play Base Blocks',
         action: {
           type: 'launch_miniapp',
           name: 'Base Blocks',
-          url: 'https://base-blocks.vercel.app',
-          splashImageUrl: 'https://base-blocks.vercel.app/splash.png',
+          url: 'base-blocks-jet.vercel.app',
+          splashImageUrl: 'base-blocks-jet.vercel.app/splash.png',
           splashBackgroundColor: '#111827',
         },
       },
