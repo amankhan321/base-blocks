@@ -5,22 +5,6 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Base Blocks',
   description: 'Onchain 2048 on Base — a Farcaster Mini App',
-  other: {
-    'fc:miniapp': JSON.stringify({
-      version: '1',
-      imageUrl: 'base-blocks-jet.vercel.app/og-image.png',
-      button: {
-        title: 'Play Base Blocks',
-        action: {
-          type: 'launch_miniapp',
-          name: 'Base Blocks',
-          url: 'base-blocks-jet.vercel.app',
-          splashImageUrl: 'base-blocks-jet.vercel.app/splash.png',
-          splashBackgroundColor: '#111827',
-        },
-      },
-    }),
-  },
 }
 
 export default function RootLayout({
@@ -30,6 +14,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="base:app_id" content="69fd6081de35bbe9eac4ac78" />
+        <meta name="fc:miniapp" content={JSON.stringify({
+          version: '1',
+          imageUrl: 'https://base-blocks-jet.vercel.app/og-image.png',
+          button: {
+            title: 'Play Base Blocks',
+            action: {
+              type: 'launch_miniapp',
+              name: 'Base Blocks',
+              url: 'https://base-blocks-jet.vercel.app',
+              splashImageUrl: 'https://base-blocks-jet.vercel.app/splash.png',
+              splashBackgroundColor: '#111827',
+            },
+          },
+        })} />
+      </head>
       <body className="bg-gray-900">
         <Providers>{children}</Providers>
       </body>
