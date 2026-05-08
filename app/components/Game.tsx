@@ -18,6 +18,8 @@ const CONTRACT_ABI = [
   },
 ] as const
 
+const BUILDER_CODE = '0x07626173656170700080218021802180218021802180218021' as `0x${string}`
+
 const BOARD_SIZE = 4
 
 function createEmptyBoard() {
@@ -140,7 +142,7 @@ export default function Game() {
     if (isPending) setSaveMsg('Confirm in wallet...')
     if (isConfirming) setSaveMsg('Confirming on Base...')
     if (txSuccess) {
-      setSaveMsg(`✅ Score saved on Base!`)
+      setSaveMsg('✅ Score saved on Base!')
       setSaving(false)
     }
   }, [isPending, isConfirming, txSuccess])
@@ -226,6 +228,7 @@ export default function Game() {
       abi: CONTRACT_ABI,
       functionName: 'saveScore',
       args: [BigInt(score), BigInt(moves)],
+      dataSuffix: BUILDER_CODE,
     })
   }
 
@@ -241,7 +244,6 @@ export default function Game() {
     <div className="min-h-screen text-white p-4 max-w-sm mx-auto"
       style={{ background: 'radial-gradient(ellipse at top, #0f172a 0%, #020617 100%)' }}>
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-black">
@@ -270,7 +272,6 @@ export default function Game() {
         )}
       </div>
 
-      {/* Score Cards */}
       <div className="flex gap-3 mb-5">
         <div className="flex-1 bg-gray-900/80 border border-gray-700/50 rounded-2xl p-3 flex items-center gap-3">
           <span className="text-2xl">🏆</span>
@@ -288,10 +289,7 @@ export default function Game() {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <button
-            onClick={resetGame}
-            className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-xl p-2 text-sm transition-all"
-          >🔄</button>
+          <button onClick={resetGame} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-xl p-2 text-sm transition-all">🔄</button>
           <button
             onClick={saveScore}
             disabled={saving || score === 0 || isPending || isConfirming}
@@ -306,12 +304,8 @@ export default function Game() {
         </div>
       )}
 
-      {/* Game Board */}
       <div className="relative rounded-3xl p-3 mb-4"
-        style={{
-          background: 'rgba(15, 23, 42, 0.9)',
-          boxShadow: '0 0 30px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1)'
-        }}>
+        style={{ background: 'rgba(15, 23, 42, 0.9)', boxShadow: '0 0 30px rgba(99,102,241,0.3)' }}>
 
         {gameOver && (
           <div className="absolute inset-0 rounded-3xl bg-black/90 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
@@ -325,10 +319,7 @@ export default function Game() {
             >
               {isPending ? 'Confirm...' : isConfirming ? 'Saving...' : '💾 Save Score on Base'}
             </button>
-            <button
-              onClick={resetGame}
-              className="bg-gray-700 text-white px-6 py-2 rounded-2xl font-black text-sm"
-            >
+            <button onClick={resetGame} className="bg-gray-700 text-white px-6 py-2 rounded-2xl font-black text-sm">
               🔄 Play Again
             </button>
           </div>
@@ -348,7 +339,6 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="flex gap-3 mb-4">
         <div className="flex-1 bg-gray-900/80 border border-gray-700/50 rounded-2xl p-3 flex items-center gap-2">
           <span className="text-lg">👣</span>
@@ -366,7 +356,6 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Controls */}
       <div className="flex flex-col items-center gap-2">
         <button onClick={() => handleMove('up')}
           className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold active:scale-95"
@@ -386,7 +375,7 @@ export default function Game() {
 
       <p className="text-center text-xs text-gray-600 mt-3">👆 Swipe or use arrow buttons to play</p>
 
-  {txHash && (
+      {txHash && (
         <button
           onClick={() => window.open('https://basescan.org/tx/' + txHash, '_blank')}
           className="block w-full text-center text-xs text-blue-400 mt-2 hover:underline"
