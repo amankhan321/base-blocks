@@ -44,7 +44,7 @@ const CONTRACT_ABI = [
   },
 ] as const
 
-const BUILDER_CODE = '0x07626173656170700080218021802180218021802180218021' as `0x${string}`
+
 const BOARD_SIZE = 4
 
 function createEmptyBoard() {
@@ -259,12 +259,11 @@ export default function Game() {
     if (score === 0) return
     setSaving(true)
     setSaveMsg('Sending to Base...')
-    writeContract({
+   writeContract({
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
       functionName: 'saveScore',
       args: [BigInt(score), BigInt(moves)],
-      dataSuffix: BUILDER_CODE,
     })
   }
 
