@@ -386,15 +386,13 @@ export default function Game() {
 
       <p className="text-center text-xs text-gray-600 mt-3">👆 Swipe or use arrow buttons to play</p>
 
-      {txHash && (
-        
-          href={`https://basescan.org/tx/${txHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-center text-xs text-blue-400 mt-2 hover:underline"
+  {txHash && (
+        <button
+          onClick={() => window.open('https://basescan.org/tx/' + txHash, '_blank')}
+          className="block w-full text-center text-xs text-blue-400 mt-2 hover:underline"
         >
           View on Basescan ↗
-        </a>
+        </button>
       )}
     </div>
   )
