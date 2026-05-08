@@ -1,8 +1,22 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import sdk from '@farcaster/miniapp-sdk'
+
+const CONTRACT_ADDRESS = '0x9C5fc82C59944f1184fF399d816a3423b6bC2724' as `0x${string}`
+const CONTRACT_ABI = [
+  {
+    name: 'saveScore',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: '_score', type: 'uint256' },
+      { name: '_moves', type: 'uint256' }
+    ],
+    outputs: [],
+  },
+] as const
 
 const BOARD_SIZE = 4
 
@@ -114,11 +128,22 @@ export default function Game() {
   const { address, isConnected } = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
+  const { writeContract, data: txHash, isPending } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: txSuccess } = useWaitForTransactionReceipt({ hash: txHash })
 
   useEffect(() => {
     sdk.actions.ready()
     setIsReady(true)
   }, [])
+
+  useEffect(() => {
+    if (isPending) setSaveMsg('Confirm in wallet...')
+    if (isConfirming) setSaveMsg('Confirming on Base...')
+    if (txSuccess) {
+      setSaveMsg(`✅ Score saved on Base!`)
+      setSaving(false)
+    }
+  }, [isPending, isConfirming, txSuccess])
 
   const handleMove = useCallback((direction: string) => {
     if (gameOver) return
@@ -188,16 +213,20 @@ export default function Game() {
     }
   }
 
-  const saveScore = async () => {
+  const saveScore = () => {
     if (!isConnected) {
       handleConnect()
       return
     }
+    if (score === 0) return
     setSaving(true)
-    setSaveMsg('Saving to Base...')
-    await new Promise(r => setTimeout(r, 1500))
-    setSaveMsg(`✅ Score ${score} saved!`)
-    setSaving(false)
+    setSaveMsg('Sending to Base...')
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: 'saveScore',
+      args: [BigInt(score), BigInt(moves)],
+    })
   }
 
   if (!isReady) {
@@ -262,18 +291,12 @@ export default function Game() {
           <button
             onClick={resetGame}
             className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-xl p-2 text-sm transition-all"
-            title="New Game"
-          >
-            🔄
-          </button>
+          >🔄</button>
           <button
             onClick={saveScore}
-            disabled={saving || score === 0}
+            disabled={saving || score === 0 || isPending || isConfirming}
             className="bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-xl p-2 text-sm transition-all disabled:opacity-40"
-            title="Save Score"
-          >
-            💾
-          </button>
+          >💾</button>
         </div>
       </div>
 
@@ -287,26 +310,26 @@ export default function Game() {
       <div className="relative rounded-3xl p-3 mb-4"
         style={{
           background: 'rgba(15, 23, 42, 0.9)',
-          border: '2px solid transparent',
-          backgroundClip: 'padding-box',
-          boxShadow: '0 0 30px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1), inset 0 0 30px rgba(0,0,0,0.5)'
+          boxShadow: '0 0 30px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1)'
         }}>
-        <div style={{
-          position: 'absolute', inset: '-2px', borderRadius: '1.5rem', zIndex: -1,
-          background: 'linear-gradient(135deg, #6366f1, #3b82f6, #8b5cf6)',
-          padding: '2px'
-        }} />
 
         {gameOver && (
           <div className="absolute inset-0 rounded-3xl bg-black/90 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
             <div className="text-4xl mb-2">😢</div>
             <div className="text-2xl font-black mb-1">Game Over!</div>
-            <div className="text-yellow-400 text-xl font-bold mb-5">Score: {score}</div>
+            <div className="text-yellow-400 text-xl font-bold mb-3">Score: {score}</div>
+            <button
+              onClick={saveScore}
+              disabled={saving || isPending || isConfirming}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-2xl font-black text-sm mb-3 disabled:opacity-50"
+            >
+              {isPending ? 'Confirm...' : isConfirming ? 'Saving...' : '💾 Save Score on Base'}
+            </button>
             <button
               onClick={resetGame}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-2xl font-black text-lg"
+              className="bg-gray-700 text-white px-6 py-2 rounded-2xl font-black text-sm"
             >
-              Play Again
+              🔄 Play Again
             </button>
           </div>
         )}
@@ -325,7 +348,7 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Stats Bar */}
+      {/* Stats */}
       <div className="flex gap-3 mb-4">
         <div className="flex-1 bg-gray-900/80 border border-gray-700/50 rounded-2xl p-3 flex items-center gap-2">
           <span className="text-lg">👣</span>
@@ -343,35 +366,36 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Arrow Controls */}
+      {/* Controls */}
       <div className="flex flex-col items-center gap-2">
-        <button
-          onClick={() => handleMove('up')}
-          className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}
-        >↑</button>
+        <button onClick={() => handleMove('up')}
+          className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}>↑</button>
         <div className="flex gap-2">
-          <button
-            onClick={() => handleMove('left')}
-            className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold transition-all active:scale-95"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
-          >←</button>
-          <button
-            onClick={() => handleMove('down')}
-            className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold transition-all active:scale-95"
-            style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}
-          >↓</button>
-          <button
-            onClick={() => handleMove('right')}
-            className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold transition-all active:scale-95"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
-          >→</button>
+          <button onClick={() => handleMove('left')}
+            className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>←</button>
+          <button onClick={() => handleMove('down')}
+            className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}>↓</button>
+          <button onClick={() => handleMove('right')}
+            className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #6366f1)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>→</button>
         </div>
       </div>
 
-      <p className="text-center text-xs text-gray-600 mt-3 flex items-center justify-center gap-1">
-        👆 Swipe or use arrow buttons to play
-      </p>
+      <p className="text-center text-xs text-gray-600 mt-3">👆 Swipe or use arrow buttons to play</p>
+
+      {txHash && (
+        
+          href={`https://basescan.org/tx/${txHash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-xs text-blue-400 mt-2 hover:underline"
+        >
+          View on Basescan ↗
+        </a>
+      )}
     </div>
   )
 }
