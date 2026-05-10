@@ -23,7 +23,7 @@ export default function Home() {
       setEnv('farcaster')
     } else if (isMobile) {
       window.location.href =
-        'https://go.cb-w.com/miniapp?appUrl=https://base-blocks-jet.vercel.app'
+        'https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fbase-blocks-jet.vercel.app'
 
       setTimeout(() => setEnv('mobile'), 2500)
     } else {
@@ -47,7 +47,9 @@ export default function Home() {
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎮</div>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+            🎮
+          </div>
 
           <div style={{ color: '#6b7280' }}>
             Opening Base Blocks...
@@ -90,7 +92,9 @@ export default function Home() {
       >
         <span style={{ color: 'white' }}>BASE </span>
 
-        <span style={{ color: '#60a5fa' }}>BLOCKS</span>
+        <span style={{ color: '#60a5fa' }}>
+          BLOCKS
+        </span>
       </h1>
 
       <p
@@ -133,7 +137,7 @@ export default function Home() {
       </div>
 
       <a
-        href="https://go.cb-w.com/miniapp?appUrl=https://base-blocks-jet.vercel.app"
+        href="https://go.cb-w.com/dapp?cb_url=https%3A%2F%2Fbase-blocks-jet.vercel.app"
         style={{
           background:
             'linear-gradient(135deg, #3b82f6, #6366f1)',
