@@ -288,6 +288,31 @@ export default function Game() {
     )
   }
 
+if (!isConnected) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-white p-6 text-center"
+        style={{ background: 'radial-gradient(ellipse at top, #0f172a 0%, #020617 100%)' }}>
+        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎮</div>
+        <h1 className="text-2xl font-black mb-1">
+          <span className="text-white">BASE </span>
+          <span className="text-blue-400">BLOCKS</span>
+        </h1>
+        <p className="text-gray-500 text-sm mb-8">Onchain 2048 on Base</p>
+        <div className="bg-gray-900 border border-gray-700 rounded-3xl p-6 mb-6 max-w-xs w-full">
+          <p className="text-gray-400 text-sm">Connect your wallet to play and save scores on Base blockchain.</p>
+        </div>
+        <button
+          onClick={handleConnect}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-full font-black text-base"
+          style={{ boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}
+        >
+          ⬡ Connect Wallet
+        </button>
+        <p className="text-gray-600 text-xs mt-4">Open in Warpcast or Base App mini apps to connect</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen text-white p-4 max-w-sm mx-auto"
       style={{ background: 'radial-gradient(ellipse at top, #0f172a 0%, #020617 100%)' }}>
