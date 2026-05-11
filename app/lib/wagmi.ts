@@ -1,6 +1,7 @@
 import { createConfig, http } from 'wagmi'
 import { base } from 'wagmi/chains'
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector'
+import { coinbaseWallet } from 'wagmi/connectors'
 import { Attribution } from 'ox/erc8021'
 
 const DATA_SUFFIX = Attribution.toDataSuffix({
@@ -9,7 +10,10 @@ const DATA_SUFFIX = Attribution.toDataSuffix({
 
 export const config = createConfig({
   chains: [base],
-  connectors: [farcasterMiniApp()],
+  connectors: [
+    farcasterMiniApp(),
+    coinbaseWallet({ appName: 'Base Blocks', appLogoUrl: 'https://base-blocks-jet.vercel.app/icon.png' }),
+  ],
   transports: {
     [base.id]: http(),
   },

@@ -251,7 +251,10 @@ export default function Game() {
   }
 
   const handleConnect = () => {
-    if (connectors.length > 0) connect({ connector: connectors[0] })
+    const cbConnector = connectors.find(c => c.id === 'coinbaseWalletSDK')
+    const fcConnector = connectors.find(c => c.id === 'farcasterMiniApp')
+    const connector = fcConnector || cbConnector || connectors[0]
+    if (connector) connect({ connector })
   }
 
   const saveScore = () => {
